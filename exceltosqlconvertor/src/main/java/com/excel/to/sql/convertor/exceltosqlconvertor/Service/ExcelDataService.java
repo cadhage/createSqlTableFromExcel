@@ -33,6 +33,7 @@ public class ExcelDataService {
             String createMutualFundsTableSQL="CREATE TABLE MutualFunds (MutualFundID INT PRIMARY KEY,FundName VARCHAR(100),FundManager VARCHAR(100),FundType VARCHAR(50),NAV DECIMAL(10,2),InvestmentAmount DECIMAL(10,2),InvestmentDate DATE,InvestmentAccountID VARCHAR(50),FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
             String createFixedDepositsTableSQL="CREATE TABLE FixedDeposits (FixedDepositID INT PRIMARY KEY,InvestmentAccountID VARCHAR(50),PrincipalAmount DECIMAL(10,2),InterestRate DECIMAL(5,2),MaturityDate DATE,InterestPaymentFrequency VARCHAR(50),MaturityAmount DECIMAL(10,2),FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
             String createStocksTableSQL="CREATE TABLE Stocks (StockID INT PRIMARY KEY,StockSymbol VARCHAR(100),StockName VARCHAR(100),StockExchange VARCHAR(50),PurchasePrice DECIMAL(10,2),PurchaseDate DATE,Quantity INT,InvestmentAccountID VARCHAR(50),FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
+            String createTransactionsTableSQL="CREATE TABLE Transactions (TransactionID INT PRIMARY KEY,AccountID VARCHAR(50),TransactionType VARCHAR(50),Amount DECIMAL(10, 2),TransactionDate DATE,TransactionStatus VARCHAR(50),Remarks VARCHAR(255),FOREIGN KEY (AccountID) REFERENCES Accounts(AccountID))";
             statement.executeUpdate(createAccountsTableSQL);
             statement.executeUpdate(createCustomerTableSQL);
             statement.executeUpdate(createInvestmentAccountsTableSQL);
@@ -40,6 +41,7 @@ public class ExcelDataService {
             statement.executeUpdate(createFixedDepositsTableSQL);
             statement.executeUpdate(createLoansTableSQL);
             statement.executeUpdate(createStocksTableSQL);
+            statement.executeUpdate(createTransactionsTableSQL);
 
             // Add more logic to create other tables
 
@@ -141,6 +143,9 @@ public class ExcelDataService {
 
             String excelFilePathMutualFunds = "E:\\Downloads\\mutual_funds.xlsx"; // Replace with your Mutual Funds file path
             importDataForTable(connection, excelFilePathMutualFunds, "MutualFunds", "INSERT INTO MutualFunds (MutualFundID, FundName, FundManager, FundType, NAV, InvestmentAmount, InvestmentDate, InvestmentAccountID) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            String excelFilePathTransactions = "E:\\Downloads\\transactions.xlsx"; // Replace with your Transactions file path
+            importDataForTable(connection, excelFilePathTransactions, "Transactions", "INSERT INTO Transactions (TransactionID, AccountID, TransactionType, Amount, TransactionDate, TransactionStatus, Remarks) VALUES (?, ?, ?, ?, ?, ?, ?)");
+
 
             // Close connection
             connection.close();
@@ -246,6 +251,15 @@ public class ExcelDataService {
                     preparedStatement.setDouble(6, currentRow.getCell(5).getNumericCellValue());
                     preparedStatement.setDate(7, java.sql.Date.valueOf(currentRow.getCell(6).getLocalDateTimeCellValue().toLocalDate()));
                     preparedStatement.setString(8, currentRow.getCell(7).getStringCellValue());
+                    break;
+                case "Transactions":
+                    preparedStatement.setInt(1, (int) currentRow.getCell(0).getNumericCellValue());
+                    preparedStatement.setString(2, currentRow.getCell(1).getStringCellValue());
+                    preparedStatement.setString(3, currentRow.getCell(2).getStringCellValue());
+                    preparedStatement.setDouble(4, currentRow.getCell(3).getNumericCellValue());
+                    preparedStatement.setDate(5, java.sql.Date.valueOf(currentRow.getCell(4).getLocalDateTimeCellValue().toLocalDate()));
+                    preparedStatement.setString(6, currentRow.getCell(5).getStringCellValue());
+                    preparedStatement.setString(7, "");
                     break;
                 // Add other cases for different tables as needed
             }
