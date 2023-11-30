@@ -28,7 +28,7 @@ public class ExcelDataService {
                     "LastTransactionDate DATE"+")" ;
             String createCustomerTableSQL = "CREATE TABLE Customers ( CustomerID INT PRIMARY KEY, FirstName VARCHAR(50), LastName VARCHAR(50), DateOfBirth DATE, Gender VARCHAR(10), Address VARCHAR(255), ContactInformation VARCHAR(100), KYCInformation VARCHAR(255))";
             // Execute SQL statement
-            String createInvestmentAccountsTableSQL="CREATE TABLE InvestmentAccounts (InvestmentAccountID VARCHAR(50) PRIMARY KEY,CustomerID INT,AccountType VARCHAR(50),InvestmentAmount DECIMAL(10,2),InvestmentStatus VARCHAR(20),InvestmentStartDate DATE,InvestmentEndDate DATE,Returns DECIMAL(10,2),InvestmentPortfolio VARCHAR(100),FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID))";
+            String createInvestmentAccountsTableSQL="CREATE TABLE InvestmentAccounts (InvestmentAccountID INT PRIMARY KEY,CustomerID INT,AccountType VARCHAR(50),InvestmentAmount DECIMAL(10,2),InvestmentStatus VARCHAR(20),InvestmentStartDate DATE,InvestmentEndDate DATE,Returns DECIMAL(10,2),InvestmentPortfolio VARCHAR(100),FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID))";
             String createMutualFundsTableSQL="CREATE TABLE MutualFunds (MutualFundID INT PRIMARY KEY,FundName VARCHAR(100),FundManager VARCHAR(100),FundType VARCHAR(50),NAV DECIMAL(10,2),InvestmentAmount DECIMAL(10,2),InvestmentDate DATE,InvestmentAccountID INT,FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
             String createFixedDepositsTableSQL="CREATE TABLE FixedDeposits (FixedDepositID INT PRIMARY KEY,InvestmentAccountID INT,PrincipalAmount DECIMAL(10,2),InterestRate DECIMAL(5,2),MaturityDate DATE,InterestPaymentFrequency VARCHAR(50),MaturityAmount DECIMAL(10,2),FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
             String createStocksTableSQL="CREATE TABLE Stocks (StockID INT PRIMARY KEY,StockSymbol VARCHAR(10),StockName VARCHAR(100),StockExchange VARCHAR(50),PurchasePrice DECIMAL(10,2),PurchaseDate DATE,Quantity INT,InvestmentAccountID INT,FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
@@ -113,13 +113,13 @@ public class ExcelDataService {
             // Establish database connection
             Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/userdatabase", "root", "sweety44");
 
-//            // Import data into Accounts table
-//            String excelFilePathAccounts = "E:\\Downloads\\accounts.xlsx"; // Replace with your Accounts file path
-//            importDataForTable(connection, excelFilePathAccounts, "Accounts", "INSERT INTO Accounts (AccountID, CustomerID, AccountType, AccountBalance, AccountStatus, InterestRate, OpeningDate, LastTransactionDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-//
-//            // Import data into Customers table
-//            String excelFilePathCustomers = "E:\\Downloads\\customers.xlsx"; // Replace with your Customers file path
-//            importDataForTable(connection, excelFilePathCustomers, "Customers", "INSERT INTO Customers (CustomerID, FirstName, LastName, DateOfBirth, Gender, Address, ContactInformation, KYCInformation) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            // Import data into Accounts table
+            String excelFilePathAccounts = "E:\\Downloads\\accounts.xlsx"; // Replace with your Accounts file path
+            importDataForTable(connection, excelFilePathAccounts, "Accounts", "INSERT INTO Accounts (AccountID, CustomerID, AccountType, AccountBalance, AccountStatus, InterestRate, OpeningDate, LastTransactionDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+
+            // Import data into Customers table
+            String excelFilePathCustomers = "E:\\Downloads\\customers.xlsx"; // Replace with your Customers file path
+            importDataForTable(connection, excelFilePathCustomers, "Customers", "INSERT INTO Customers (CustomerID, FirstName, LastName, DateOfBirth, Gender, Address, ContactInformation, KYCInformation) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
             // Import data into InvestmentAccounts table
             String excelFilePathInvestmentAccounts = "E:\\Downloads\\investment_accounts.xlsx"; // Replace with your InvestmentAccounts file path
@@ -164,36 +164,35 @@ public class ExcelDataService {
 
             // Set values from Excel to PreparedStatement for the respective table
             switch (tableName) {
-//                case "Accounts":
-//                    // Set values for Accounts table
-//                    // Example:
-//                    preparedStatement.setString(1, currentRow.getCell(0).getStringCellValue());
-//                    preparedStatement.setInt(2, (int) currentRow.getCell(1).getNumericCellValue());
-//                    // Set other values accordingly for Accounts table
-//                    preparedStatement.setString(3, currentRow.getCell(2).getStringCellValue());
-//                    preparedStatement.setDouble(4, currentRow.getCell(3).getNumericCellValue());
-//                    preparedStatement.setString(5, currentRow.getCell(4).getStringCellValue());
-//                    preparedStatement.setDouble(6, currentRow.getCell(5).getNumericCellValue());
-//                    preparedStatement.setDate(7, java.sql.Date.valueOf(currentRow.getCell(6).getLocalDateTimeCellValue().toLocalDate()));
-//                    preparedStatement.setDate(8, java.sql.Date.valueOf(currentRow.getCell(7).getLocalDateTimeCellValue().toLocalDate()));
-//                    break;
-
-//                case "Customers":
-//                    preparedStatement.setInt(1, (int) currentRow.getCell(0).getNumericCellValue());
-//                    preparedStatement.setString(2, currentRow.getCell(1).getStringCellValue());
-//                    preparedStatement.setString(3, currentRow.getCell(2).getStringCellValue());
-//                    preparedStatement.setDate(4, java.sql.Date.valueOf(currentRow.getCell(3).getLocalDateTimeCellValue().toLocalDate()));
-//                    preparedStatement.setString(5, currentRow.getCell(4).getStringCellValue());
-//                    preparedStatement.setString(6, currentRow.getCell(5).getStringCellValue());
-//                    preparedStatement.setString(7, currentRow.getCell(6).getStringCellValue());
-//                    preparedStatement.setString(8, currentRow.getCell(7).getStringCellValue());
-//                    break;
-
-                case "InvestmentAccounts":
+                case "Accounts":
+                    // Set values for Accounts table
+                    // Example:
                     preparedStatement.setString(1, currentRow.getCell(0).getStringCellValue());
                     preparedStatement.setInt(2, (int) currentRow.getCell(1).getNumericCellValue());
+                    // Set other values accordingly for Accounts table
                     preparedStatement.setString(3, currentRow.getCell(2).getStringCellValue());
-                    preparedStatement.setString(4, currentRow.getCell(3).getStringCellValue());
+                    preparedStatement.setDouble(4, currentRow.getCell(3).getNumericCellValue());
+                    preparedStatement.setString(5, currentRow.getCell(4).getStringCellValue());
+                    preparedStatement.setDouble(6, currentRow.getCell(5).getNumericCellValue());
+                    preparedStatement.setDate(7, java.sql.Date.valueOf(currentRow.getCell(6).getLocalDateTimeCellValue().toLocalDate()));
+                    preparedStatement.setDate(8, java.sql.Date.valueOf(currentRow.getCell(7).getLocalDateTimeCellValue().toLocalDate()));
+                    break;
+                case "Customers":
+                    preparedStatement.setInt(1, (int) currentRow.getCell(0).getNumericCellValue());
+                    preparedStatement.setString(2, currentRow.getCell(1).getStringCellValue());
+                    preparedStatement.setString(3, currentRow.getCell(2).getStringCellValue());
+                    preparedStatement.setDate(4, java.sql.Date.valueOf(currentRow.getCell(3).getLocalDateTimeCellValue().toLocalDate()));
+                    preparedStatement.setString(5, currentRow.getCell(4).getStringCellValue());
+                    preparedStatement.setString(6, currentRow.getCell(5).getStringCellValue());
+                    preparedStatement.setString(7, currentRow.getCell(6).getStringCellValue());
+                    preparedStatement.setString(8, currentRow.getCell(7).getStringCellValue());
+                    break;
+
+                case "InvestmentAccounts":
+                    preparedStatement.setInt(1, (int) currentRow.getCell(0).getNumericCellValue());
+                    preparedStatement.setInt(2, (int) currentRow.getCell(1).getNumericCellValue());
+                    preparedStatement.setString(3, currentRow.getCell(2).getStringCellValue());
+                    preparedStatement.setDouble(4, currentRow.getCell(3).getNumericCellValue());
                     preparedStatement.setString(5, currentRow.getCell(4).getStringCellValue());
                     preparedStatement.setDate(6, java.sql.Date.valueOf(currentRow.getCell(5).getLocalDateTimeCellValue().toLocalDate()));
                     preparedStatement.setDate(7, java.sql.Date.valueOf(currentRow.getCell(6).getLocalDateTimeCellValue().toLocalDate()));
