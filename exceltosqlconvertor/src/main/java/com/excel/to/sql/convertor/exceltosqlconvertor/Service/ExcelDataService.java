@@ -5,14 +5,15 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.json.JSONObject;
+import org.json.JSONString;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ExcelDataService {
@@ -351,7 +352,7 @@ public class ExcelDataService {
     }
     public List<JSONObject> getCustomerTransactions() {
         Connection connection = null;
-        Statement statement = null;
+        PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         List<JSONObject> jsonObjectList = new ArrayList<>();
 
@@ -360,32 +361,41 @@ public class ExcelDataService {
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/userdatabase", "root", "sweety44");
 
             // Create SQL query
-            String sql = "SELECT c.CustomerID, c.FirstName, c.LastName, t.TransactionDate, t.Amount, t.TransactionType " +
-                    "FROM Customers c " +
-                    "JOIN ( " +
-                    "    SELECT c.CustomerID, " +
-                    "    COALESCE(SUM(a.AccountBalance), 0) + COALESCE(SUM(s.Quantity * s.CurrentPrice), 0) " +
-                    "    + COALESCE(SUM(mf.InvestmentAmount), 0) + COALESCE(SUM(fd.MaturityAmount), 0) AS TotalAssets " +
-                    "    FROM Customers c " +
-                    "    LEFT JOIN Accounts a ON c.CustomerID = a.CustomerID " +
-                    "    LEFT JOIN InvestmentAccounts ia ON c.CustomerID = ia.CustomerID " +
-                    "    LEFT JOIN Stocks s ON ia.InvestmentAccountID = s.InvestmentAccountID " +
-                    "    LEFT JOIN MutualFunds mf ON ia.InvestmentAccountID = mf.InvestmentAccountID " +
-                    "    LEFT JOIN FixedDeposits fd ON ia.InvestmentAccountID = fd.InvestmentAccountID " +
-                    "    GROUP BY c.CustomerID " +
-                    "    ORDER BY TotalAssets DESC " +
-                    "    LIMIT 5 " +
-                    ") top_customers ON c.CustomerID = top_customers.CustomerID " +
-                    "LEFT JOIN Accounts a ON c.CustomerID = a.CustomerID " +
-                    "LEFT JOIN Transactions t ON a.AccountID = t.AccountID " +
-                    "WHERE t.TransactionDate <= NOW() " +
+            String sql = "SELECT \n" +
+                    "    c.CustomerID,\n" +
+                    "    c.FirstName,\n" +
+                    "    c.LastName,\n" +
+                    "    t.TransactionDate,\n" +
+                    "    t.Amount,\n" +
+                    "    t.TransactionType\n" +
+                    "FROM Customers c\n" +
+                    "JOIN (\n" +
+                    "    SELECT \n" +
+                    "        c.CustomerID,\n" +
+                    "        COALESCE(SUM(a.AccountBalance), 0) \n" +
+                    "        + COALESCE(SUM(s.Quantity * s.CurrentPrice), 0) \n" +
+                    "        + COALESCE(SUM(mf.InvestmentAmount), 0) \n" +
+                    "        + COALESCE(SUM(fd.MaturityAmount), 0) AS TotalAssets\n" +
+                    "    FROM Customers c\n" +
+                    "    LEFT JOIN Accounts a ON c.CustomerID = a.CustomerID\n" +
+                    "    LEFT JOIN InvestmentAccounts ia ON c.CustomerID = ia.CustomerID\n" +
+                    "    LEFT JOIN Stocks s ON ia.InvestmentAccountID = s.InvestmentAccountID\n" +
+                    "    LEFT JOIN MutualFunds mf ON ia.InvestmentAccountID = mf.InvestmentAccountID\n" +
+                    "    LEFT JOIN FixedDeposits fd ON ia.InvestmentAccountID = fd.InvestmentAccountID\n" +
+                    "    GROUP BY c.CustomerID\n" +
+                    "    ORDER BY TotalAssets DESC\n" +
+                    "    LIMIT 5\n" +
+                    ") top_customers ON c.CustomerID = top_customers.CustomerID\n" +
+                    "LEFT JOIN Accounts a ON c.CustomerID = a.CustomerID\n" +
+                    "LEFT JOIN Transactions t ON a.AccountID = t.AccountID\n" +
+                    "WHERE t.TransactionDate <= NOW() -- Modify this condition according to your database's date column\n" +
                     "ORDER BY c.CustomerID, t.TransactionDate";
 
-            // Create a statement
-            statement = connection.createStatement();
+            // Create a prepared statement
+            preparedStatement = connection.prepareStatement(sql);
 
             // Execute the query
-            resultSet = statement.executeQuery(sql);
+            resultSet = preparedStatement.executeQuery();
 
             // Process the result set
             while (resultSet.next()) {
@@ -404,9 +414,10 @@ public class ExcelDataService {
                 customerTransactionJson.put("TransactionDate", transactionDate.toString());
                 customerTransactionJson.put("Amount", amount);
                 customerTransactionJson.put("TransactionType", transactionType);
-                System.out.println(customerTransactionJson);
+
                 jsonObjectList.add(customerTransactionJson);
             }
+//            writeToJSONFiles(jsonObjectList);
             return jsonObjectList;
 
         } catch (SQLException e) {
@@ -416,11 +427,160 @@ public class ExcelDataService {
             // Close connections and statements
             try {
                 if (resultSet != null) resultSet.close();
-                if (statement != null) statement.close();
+                if (preparedStatement != null) preparedStatement.close();
                 if (connection != null) connection.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        }}
+        }
+    }
+//    public void writeToJSONFiles(List<JSONObject> customerTransactions) {
+//        Map<Integer, FileWriter> fileWriterMap = new HashMap<>();
+//
+//        // Separate transactions by CustomerID
+//        for (JSONObject transaction : customerTransactions) {
+//            int customerId = (int) transaction.get("CustomerID");
+//            FileWriter fileWriter = fileWriterMap.get(customerId);
+//            if (fileWriter == null) {
+//                try {
+//                    // Create a new file for each CustomerID
+//                    String fileName = "Customer_" + customerId + ".json";
+//                    fileWriter = new FileWriter(fileName);
+//                    fileWriterMap.put(customerId, fileWriter);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            // Write transaction to respective file
+//            try {
+//                fileWriter.write(transaction.toString() + "\n");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        // Close all file writers and print file content
+//        for (Map.Entry<Integer, FileWriter> entry : fileWriterMap.entrySet()) {
+//            int customerId = entry.getKey();
+//            FileWriter fileWriter = entry.getValue();
+//            try {
+//                fileWriter.close();
+//                System.out.println("Contents of Customer_" + customerId + ".json:");
+//                System.out.println("-----------------------------");
+//                // Read and print the content of the file
+//                // (You can also modify this to read the file content and store it in a variable)
+//                // Example:
+//                 BufferedReader reader = new BufferedReader(new FileReader("Customer_" + customerId + ".json"));
+//                 String line;
+//                 while ((line = reader.readLine()) != null) {
+//                    System.out.println(line);
+//
+//                 }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+//    public void writeToJSONFiles(List<JSONObject> customerTransactions) {
+//        // A Map to store FileWriter instances for each customer ID
+//        // The key is the customer ID, and the value is the FileWriter instance
+//        Map<Integer, BufferedWriter> fileWriterMap = new HashMap<>();
+//
+//        // Separate transactions by CustomerID
+//        for (JSONObject transaction : customerTransactions) {
+//            int customerId = (int) transaction.get("CustomerID");
+//            BufferedWriter fileWriter = fileWriterMap.get(customerId);
+//
+//            // Create a new file writer if it does not exist for the CustomerID
+//            if (fileWriter == null) {
+//                try {
+//                    String fileName = "Customer_" + customerId + ".json";
+//                    fileWriter = new BufferedWriter(new FileWriter(fileName));
+//                    fileWriterMap.put(customerId, fileWriter);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            // Write transaction to the respective file
+//            try {
+//                fileWriter.write(transaction.toString() + "\n");
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        // Close all file writers and print file content
+//        for (Map.Entry<Integer, BufferedWriter> entry : fileWriterMap.entrySet()) {
+//            int customerId = entry.getKey();
+//            BufferedWriter fileWriter = entry.getValue();
+//            try {
+//                fileWriter.close();
+//                System.out.println("Contents of Customer_" + customerId + ".json:");
+//                System.out.println("-----------------------------");
+//
+//                // Read and print the content of the file
+//                // (You can also modify this to read the file content and store it in a variable)
+//                // Example:
+//                BufferedReader reader = new BufferedReader(new FileReader("Customer_" + customerId + ".json"));
+//                String line;
+//                while ((line = reader.readLine()) != null) {
+//                    System.out.println(line);
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+//    public Map<Integer, String> groupTransactionsByCustomer(List<JSONObject> customerTransactions) {
+//        Map<Integer, String> transactionMap = new HashMap<>();
+//
+//        // Separate transactions by CustomerID
+//        for (JSONObject transaction : customerTransactions) {
+//            int customerId = (int) transaction.get("CustomerID");
+//            String transactionString = transaction.toString();
+//
+//            if (!transactionMap.containsKey(customerId)) {
+//                transactionMap.put(customerId, transactionString+",");
+//            } else {
+//                transactionMap.put(customerId, transactionMap.get(customerId) + transactionString+",");
+//            }
+//        }
+//        System.out.println(transactionMap);
+//        return transactionMap;
+//    }
+//    public Map<Integer, String> groupTransactionsByCustomer(List<JSONObject> customerTransactions) {
+//        Map<Integer, String> transactionMap = new HashMap<>();
+//
+//        // Separate transactions by CustomerID
+//        for (JSONObject transaction : customerTransactions) {
+//            int customerId = (int) transaction.get("CustomerID");
+//
+//            if (!transactionMap.containsKey(customerId)) {
+//                List<JSONObject> transactionsList = new ArrayList<>();
+//                transactionsList.add(transaction);
+//                transactionMap.put(customerId, transactionsList.toString());
+//            } else {
+////                List<JSONObject> existingCustomerTransactions = transactionMap.get(customerId);
+////                existingCustomerTransactions.add(transaction);
+//                transactionMap.put(customerId, transactionMap.get(customerId)+transaction);
+//            }
+//        }
+//
+//        return transactionMap;
+//    }
+public List<List<JSONObject>> groupTransactionsByCustomer(List<JSONObject> customerTransactions) {
+    List<List<JSONObject>> responseObjectLi=new ArrayList<>();
+    List<JSONObject> transactionObject= customerTransactions;
+    List<JSONObject> responseObject= new ArrayList<>();
+    // Separate transactions by CustomerID
+    for (JSONObject transaction : transactionObject) {
+        responseObject.add(transaction);
+//        System.out.println(transaction);
+    }
+    responseObjectLi.add(responseObject);
+    return responseObjectLi;
+}
 
 }
