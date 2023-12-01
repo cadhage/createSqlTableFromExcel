@@ -32,7 +32,7 @@ public class ExcelDataService {
             String createInvestmentAccountsTableSQL="CREATE TABLE InvestmentAccounts (InvestmentAccountID VARCHAR(50) PRIMARY KEY,CustomerID INT,AccountType VARCHAR(50),InvestmentAmount DECIMAL(10,2),InvestmentStatus VARCHAR(20),InvestmentStartDate DATE,InvestmentEndDate DATE,Returns DECIMAL(10,2),InvestmentPortfolio VARCHAR(100),FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID))";
             String createMutualFundsTableSQL="CREATE TABLE MutualFunds (MutualFundID INT PRIMARY KEY,FundName VARCHAR(100),FundManager VARCHAR(100),FundType VARCHAR(50),NAV DECIMAL(10,2),InvestmentAmount DECIMAL(10,2),InvestmentDate DATE,InvestmentAccountID VARCHAR(50),FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
             String createFixedDepositsTableSQL="CREATE TABLE FixedDeposits (FixedDepositID INT PRIMARY KEY,InvestmentAccountID VARCHAR(50),PrincipalAmount DECIMAL(10,2),InterestRate DECIMAL(5,2),MaturityDate DATE,InterestPaymentFrequency VARCHAR(50),MaturityAmount DECIMAL(10,2),FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
-            String createStocksTableSQL="CREATE TABLE Stocks (StockID INT PRIMARY KEY,StockSymbol VARCHAR(100),StockName VARCHAR(100),StockExchange VARCHAR(50),PurchasePrice DECIMAL(10,2),PurchaseDate DATE,Quantity INT,InvestmentAccountID VARCHAR(50),FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
+            String createStocksTableSQL="CREATE TABLE Stocks (StockID INT PRIMARY KEY,StockSymbol VARCHAR(100),StockName VARCHAR(100),StockExchange VARCHAR(50),PurchasePrice DECIMAL(10,2),PurchaseDate DATE,Quantity INT,InvestmentAccountID VARCHAR(50),CurrentPrice DECIMAL(10,2),FOREIGN KEY (InvestmentAccountID) REFERENCES InvestmentAccounts(InvestmentAccountID))";
             String createTransactionsTableSQL="CREATE TABLE Transactions (TransactionID INT PRIMARY KEY,AccountID VARCHAR(50),TransactionType VARCHAR(50),Amount DECIMAL(10, 2),TransactionDate DATE,TransactionStatus VARCHAR(50),Remarks VARCHAR(255),FOREIGN KEY (AccountID) REFERENCES Accounts(AccountID))";
             statement.executeUpdate(createAccountsTableSQL);
             statement.executeUpdate(createCustomerTableSQL);
@@ -135,7 +135,7 @@ public class ExcelDataService {
 
             // Import data into Stocks table
             String excelFilePathStocks = "E:\\Downloads\\stocks.xlsx"; // Replace with your Stocks file path
-            importDataForTable(connection, excelFilePathStocks, "Stocks", "INSERT INTO Stocks (StockID, StockSymbol, StockName, StockExchange, PurchasePrice, PurchaseDate, Quantity, InvestmentAccountID) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            importDataForTable(connection, excelFilePathStocks, "Stocks", "INSERT INTO Stocks (StockID, StockSymbol, StockName, StockExchange, PurchasePrice, PurchaseDate, Quantity, InvestmentAccountID,CurrentPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)");
 
 //             Import data into FixedDeposits table
             String excelFilePathFixedDeposits = "E:\\Downloads\\fixed_deposits.xlsx"; // Replace with your FixedDeposits file path
@@ -229,6 +229,7 @@ public class ExcelDataService {
                     preparedStatement.setDate(6, java.sql.Date.valueOf(currentRow.getCell(5).getLocalDateTimeCellValue().toLocalDate()));
                     preparedStatement.setInt(7, (int) currentRow.getCell(6).getNumericCellValue());
                     preparedStatement.setString(8, currentRow.getCell(7).getStringCellValue());
+                    preparedStatement.setDouble(9, currentRow.getCell(8).getNumericCellValue());
                     break;
 
                 case "FixedDeposits":
