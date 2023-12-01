@@ -4,12 +4,15 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class ExcelDataService {
@@ -51,7 +54,79 @@ public class ExcelDataService {
             return false;
         }
     }
-
+//    public List<JSONObject> getCustomerTransactions() {
+//        Connection connection = null;
+//        Statement statement = null;
+//        ResultSet resultSet = null;
+//        List<JSONObject> jsonObjectList = new ArrayList<>();
+//
+//        try {
+//            // Establish the database connection
+//            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/userdatabase", "root", "sweety44");
+//
+//            // Create SQL query
+//            String sql = "SELECT c.CustomerID, c.FirstName, c.LastName, t.TransactionDate, t.Amount, t.TransactionType " +
+//                    "FROM Customers c " +
+//                    "JOIN ( " +
+//                    "    SELECT c.CustomerID, " +
+//                    "    COALESCE(SUM(a.AccountBalance), 0) + COALESCE(SUM(s.Quantity * s.CurrentPrice), 0) " +
+//                    "    + COALESCE(SUM(mf.InvestmentAmount), 0) + COALESCE(SUM(fd.MaturityAmount), 0) AS TotalAssets " +
+//                    "    FROM Customers c " +
+//                    "    LEFT JOIN Accounts a ON c.CustomerID = a.CustomerID " +
+//                    "    LEFT JOIN InvestmentAccounts ia ON c.CustomerID = ia.CustomerID " +
+//                    "    LEFT JOIN Stocks s ON ia.InvestmentAccountID = s.InvestmentAccountID " +
+//                    "    LEFT JOIN MutualFunds mf ON ia.InvestmentAccountID = mf.InvestmentAccountID " +
+//                    "    LEFT JOIN FixedDeposits fd ON ia.InvestmentAccountID = fd.InvestmentAccountID " +
+//                    "    GROUP BY c.CustomerID " +
+//                    "    ORDER BY TotalAssets DESC " +
+//                    "    LIMIT 5 " +
+//                    ") top_customers ON c.CustomerID = top_customers.CustomerID " +
+//                    "LEFT JOIN Accounts a ON c.CustomerID = a.CustomerID " +
+//                    "LEFT JOIN Transactions t ON a.AccountID = t.AccountID " +
+//                    "WHERE t.TransactionDate <= NOW() " +
+//                    "ORDER BY c.CustomerID, t.TransactionDate";
+//
+//            // Create a statement
+//            statement = connection.createStatement();
+//
+//            // Execute the query
+//            resultSet = statement.executeQuery(sql);
+//
+//            // Process the result set
+//            while (resultSet.next()) {
+//                int customerId = resultSet.getInt("CustomerID");
+//                String firstName = resultSet.getString("FirstName");
+//                String lastName = resultSet.getString("LastName");
+//                Date transactionDate = resultSet.getDate("TransactionDate");
+//                double amount = resultSet.getDouble("Amount");
+//                String transactionType = resultSet.getString("TransactionType");
+//
+//                // Do something with retrieved data
+////                JSONObject customerTransactionJson = new JSONObject();
+////                customerTransactionJson.put("CustomerID", customerId);
+////                customerTransactionJson.put("FirstName", firstName);
+////                customerTransactionJson.put("LastName", lastName);
+////                customerTransactionJson.put("TransactionDate", transactionDate);
+////                customerTransactionJson.put("Amount", amount);
+////                customerTransactionJson.put("TransactionType", transactionType);
+////                jsonObjectList.add(customerTransactionJson);
+//                String ss = "{\"CustomerID\": " + customerId + ", \"FirstName\": \"" + firstName +
+//                        "\", \"LastName\": \"" + lastName + "\", \"TransactionDate\": \"" + transactionDate +
+//                        "\", \"Amount\": " + amount + ", \"TransactionType\": \"" + transactionType + "\"}";
+//
+//// Converting the string representation to a JSONObject
+//                JSONObject jsonObject = new JSONObject(ss);
+//                System.out.println(jsonObject.toString());
+//                jsonObjectList.add(jsonObject);
+//            }
+//            return jsonObjectList;
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            return null;
+////            return jsonObjectList;
+//        }
+//    }
 //    public boolean importDataFromExcelFiles() {
 //        // Logic to import data from Excel files to respective tables
 //        // Read Excel files and use JDBC to insert data into tables
@@ -274,5 +349,78 @@ public class ExcelDataService {
         workbook.close();
         excelFile.close();
     }
+    public List<JSONObject> getCustomerTransactions() {
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+        List<JSONObject> jsonObjectList = new ArrayList<>();
+
+        try {
+            // Establish the database connection
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/userdatabase", "root", "sweety44");
+
+            // Create SQL query
+            String sql = "SELECT c.CustomerID, c.FirstName, c.LastName, t.TransactionDate, t.Amount, t.TransactionType " +
+                    "FROM Customers c " +
+                    "JOIN ( " +
+                    "    SELECT c.CustomerID, " +
+                    "    COALESCE(SUM(a.AccountBalance), 0) + COALESCE(SUM(s.Quantity * s.CurrentPrice), 0) " +
+                    "    + COALESCE(SUM(mf.InvestmentAmount), 0) + COALESCE(SUM(fd.MaturityAmount), 0) AS TotalAssets " +
+                    "    FROM Customers c " +
+                    "    LEFT JOIN Accounts a ON c.CustomerID = a.CustomerID " +
+                    "    LEFT JOIN InvestmentAccounts ia ON c.CustomerID = ia.CustomerID " +
+                    "    LEFT JOIN Stocks s ON ia.InvestmentAccountID = s.InvestmentAccountID " +
+                    "    LEFT JOIN MutualFunds mf ON ia.InvestmentAccountID = mf.InvestmentAccountID " +
+                    "    LEFT JOIN FixedDeposits fd ON ia.InvestmentAccountID = fd.InvestmentAccountID " +
+                    "    GROUP BY c.CustomerID " +
+                    "    ORDER BY TotalAssets DESC " +
+                    "    LIMIT 5 " +
+                    ") top_customers ON c.CustomerID = top_customers.CustomerID " +
+                    "LEFT JOIN Accounts a ON c.CustomerID = a.CustomerID " +
+                    "LEFT JOIN Transactions t ON a.AccountID = t.AccountID " +
+                    "WHERE t.TransactionDate <= NOW() " +
+                    "ORDER BY c.CustomerID, t.TransactionDate";
+
+            // Create a statement
+            statement = connection.createStatement();
+
+            // Execute the query
+            resultSet = statement.executeQuery(sql);
+
+            // Process the result set
+            while (resultSet.next()) {
+                int customerId = resultSet.getInt("CustomerID");
+                String firstName = resultSet.getString("FirstName");
+                String lastName = resultSet.getString("LastName");
+                Date transactionDate = resultSet.getDate("TransactionDate");
+                double amount = resultSet.getDouble("Amount");
+                String transactionType = resultSet.getString("TransactionType");
+
+                // Create JSON object
+                JSONObject customerTransactionJson = new JSONObject();
+                customerTransactionJson.put("CustomerID", customerId);
+                customerTransactionJson.put("FirstName", firstName);
+                customerTransactionJson.put("LastName", lastName);
+                customerTransactionJson.put("TransactionDate", transactionDate.toString());
+                customerTransactionJson.put("Amount", amount);
+                customerTransactionJson.put("TransactionType", transactionType);
+                System.out.println(customerTransactionJson);
+                jsonObjectList.add(customerTransactionJson);
+            }
+            return jsonObjectList;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            // Close connections and statements
+            try {
+                if (resultSet != null) resultSet.close();
+                if (statement != null) statement.close();
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }}
 
 }
