@@ -570,7 +570,7 @@ public class ExcelDataService {
 //
 //        return transactionMap;
 //    }
-public List<List<JSONObject>> groupTransactionsByCustomer(List<JSONObject> customerTransactions) {
+public List<JSONObject> groupTransactionsByCustomer(List<JSONObject> customerTransactions) {
     List<List<JSONObject>> responseObjectLi=new ArrayList<>();
     List<JSONObject> transactionObject= customerTransactions;
     List<JSONObject> responseObject= new ArrayList<>();
@@ -580,7 +580,7 @@ public List<List<JSONObject>> groupTransactionsByCustomer(List<JSONObject> custo
 //        System.out.println(transaction);
     }
     responseObjectLi.add(responseObject);
-    return responseObjectLi;
+    return responseObject;
 }
 
 }

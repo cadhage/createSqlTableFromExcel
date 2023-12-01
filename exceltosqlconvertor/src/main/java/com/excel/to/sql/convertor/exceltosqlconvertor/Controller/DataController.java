@@ -56,9 +56,9 @@ public class DataController {
     }
     @GetMapping(value = "/get/customer/details/one", produces = MediaType.APPLICATION_JSON_VALUE)
     public String groupTransactionsByCustomerOne() {
-        List<List<JSONObject>> responseObject = excelDataService.groupTransactionsByCustomer(excelDataService.getCustomerTransactions());
+        List<JSONObject> responseObject = excelDataService.groupTransactionsByCustomer(excelDataService.getCustomerTransactions());
 //        System.out.println(responseObject);
-        return responseObject.get(0).toString();
+        return responseObject.toString();
     }
 //    @GetMapping(value = "/get/customer/details/one", produces = MediaType.APPLICATION_JSON_VALUE)
 //    public List<String> groupTransactionsByCustomerOne() {
